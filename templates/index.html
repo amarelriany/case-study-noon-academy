@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boon Academy - Facilitator Prioritization & Workload Dashboard</title>
+    <meta name="description"
+        content="Operational priority queue and performance dashboard for BoonAcademy facilitators. Maximize campus goals and solve student invisibility.">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Dashboard Stylesheet -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Modern Collapsible/Unpinnable Sidebar Navigation -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <div class="logo-dot"></div>
+                    <div>
+                        <span class="logo-text">Boon</span>
+                        <span class="logo-sub-text">Priority Hub</span>
+                    </div>
+                </div>
+                <!-- Pin/Unpin button -->
+                <button id="btn-pin-sidebar" class="btn-pin" onclick="toggleSidebarPin()"
+                    title="Toggle Pin/Unpin Sidebar">
+                    <i id="pin-icon" class="fa-solid fa-thumbtack" style="transform: rotate(45deg);"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
+                <button id="btn-tab-workspace" class="sidebar-item active" onclick="switchTab('workspace')">
+                    <i class="fa-solid fa-rectangle-list"></i>
+                    <span>Workspace</span>
+                </button>
+                <button id="btn-tab-admin" class="sidebar-item" onclick="switchTab('admin')">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Admin Insights</span>
+                </button>
+            </div>
+
+            <div class="sidebar-filters">
+                <!-- Facilitator Filter Dropdown inside Sidebar -->
+                <div class="filter-dropdown-container">
+                    <label for="select-facilitator-filter">Facilitator</label>
+                    <select id="select-facilitator-filter" class="select-input" onchange="loadQueueData()">
+                        <option value="">All Facilitators</option>
+                    </select>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Floating hamburger toggle for mobile / unpinned view drawer -->
+        <button class="btn-sidebar-toggle-floating" onclick="toggleSidebarDrawer()" title="Toggle Menu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div class="content-container">
+                <!-- Page Title Header -->
+                <header class="content-header" style="margin-bottom: 1.5rem;">
+                    <h2 id="page-title" style="font-size: 1.8rem; font-weight: 700; color: var(--text-title);">
+                        Facilitator Workspace</h2>
+                </header>
+
+                <!-- Main Workspace View -->
+                <main id="view-workspace">
+
+                    <!-- Unified Priority Table -->
+                    <div class="table-card">
+                        <div class="table-filters">
+                            <div class="table-search">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="input-search-students" class="text-input"
+                                    placeholder="Search by student ID or name..." oninput="filterStudentTable()">
+                            </div>
+
+                            <div class="flex-between gap-2">
+
+                                <select id="select-status-filter" class="select-input" style="min-width:140px;"
+                                    onchange="loadQueueData()">
+                                    <option value="pending">Active Queue</option>
+                                    <option value="completed">Completed Interventions</option>
+                                    <option value="ignored">Ignored Students</option>
+                                    <option value="all">All Students</option>
+                                </select>
+
+                                <button class="btn-secondary" onclick="exportToCSV()"
+                                    title="Export student queue to CSV">
+                                    <i class="fa-solid fa-file-export"></i> Export CSV
+                                </button>
+
+                                <button id="btn-add-student-modal" class="btn-primary" onclick="openAddStudentModal()">
+                                    <i class="fa-solid fa-user-plus"></i> Add Student
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- All Students Data Table -->
+                        <div class="custom-table-container" style="border-radius: 16px 16px 0 0; border-bottom: none;">
+                            <table class="custom-table" id="student-main-table">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" onclick="handleSort('priority_level')">Priority <i
+                                                id="sort-icon-priority_level" class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" onclick="handleSort('priority_score')">Risk Score <i
+                                                id="sort-icon-priority_score" class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" onclick="handleSort('student_id')">Student ID <i
+                                                id="sort-icon-student_id" class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable text-center" onclick="handleSort('avg_daily_practice')">
+                                            Practice/d <i id="sort-icon-avg_daily_practice"
+                                                class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable text-center" onclick="handleSort('last_quiz_score')">Quiz <i
+                                                id="sort-icon-last_quiz_score" class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable text-center" onclick="handleSort('notes_count')">Notes <i
+                                                id="sort-icon-notes_count" class="fa-solid fa-sort"></i></th>
+                                        <th>Why</th>
+                                        <th class="text-center" style="width:160px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="student-table-body">
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination Controls -->
+                        <div class="pagination-container">
+                            <div class="pagination-size-select">
+                                <span>Show</span>
+                                <select id="select-page-size" class="select-input"
+                                    style="padding: 0.35rem 1.5rem 0.35rem 0.75rem; min-width: 80px;"
+                                    onchange="changePageSize()">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="all">All</option>
+                                </select>
+                                <span>records per page</span>
+                            </div>
+
+                            <div class="pagination-info" id="pagination-info-text">
+                                Showing 0-0 of 0 records
+                            </div>
+
+                            <div class="pagination-controls">
+                                <button class="pagination-btn" id="btn-prev-page" onclick="prevPage()"
+                                    title="Previous Page">
+                                    <i class="fa-solid fa-chevron-left"></i> Previous
+                                </button>
+                                <span style="font-size: 0.88rem; color: var(--text-body); margin: 0 0.5rem;"
+                                    id="pagination-page-indicator">
+                                    Page 1 of 1
+                                </span>
+                                <button class="pagination-btn" id="btn-next-page" onclick="nextPage()"
+                                    title="Next Page">
+                                    Next <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+
+                <!-- Admin Insights View -->
+                <main id="view-admin" style="display:none;">
+                    <!-- Key Admin Metrics Cards -->
+                    <section class="admin-summary-grid" style="margin-bottom: 2rem;">
+                        <div class="summary-card">
+                            <div class="summary-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="summary-details">
+                                <h4>Total Registered</h4>
+                                <div id="admin-val-total-students" class="value">-</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon"><i class="fa-solid fa-eye-slash"></i></div>
+                            <div class="summary-details">
+                                <h4>Invisibility Index</h4>
+                                <div id="admin-val-invisibility" class="value">-</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon"><i class="fa-solid fa-sticky-note"></i></div>
+                            <div class="summary-details">
+                                <h4>Total Notes Logs</h4>
+                                <div id="admin-val-total-notes" class="value">-</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-icon"><i class="fa-solid fa-bullseye"></i></div>
+                            <div class="summary-details">
+                                <h4>Total Interventions Left</h4>
+                                <div id="admin-val-interventions-left" class="value">-</div>
+                            </div>
+                        </div>
+                    </section>
+
+
+                    <!-- Issues & Workloads Split -->
+                    <div class="admin-charts-grid">
+                        <!-- Issues Impact analysis -->
+                        <div class="table-card">
+                            <div class="profile-section-title" style="margin-bottom:1.5rem;">
+                                <h3>Main Issues Impact Matrix</h3>
+                            </div>
+                            <div class="custom-table-container">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Identified Issue</th>
+                                            <th class="text-center" style="width:120px;">Student Count</th>
+                                            <th>Impact & Urgency</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-issues-table-body">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Facilitator Workload Leaderboard -->
+                        <div class="table-card">
+                            <div class="profile-section-title" style="margin-bottom:1.5rem;">
+                                <h3>Facilitator Tracking Activity</h3>
+                            </div>
+                            <div class="custom-table-container">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Facilitator Email</th>
+                                            <th class="text-center">Total Notes Logged</th>
+                                            <th>Activity Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-facil-table-body">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+
+                <footer
+                    style="margin-top:4rem; text-align:center; padding:2rem 0; color:var(--text-muted); font-size:0.85rem; border-top:1px solid rgba(226,232,240,0.6);">
+                    BoonAcademy © 2026. Prioritization system loaded successfully.
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Detail Workspace Modal -->
+    <div id="modal-student-detail" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:1.25rem;">
+                    <span id="detail-priority-badge" class="priority-badge critical">CRITICAL</span>
+                    <div>
+                        <h2 id="detail-student-name">Student Detail</h2>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeStudentDetailModal()">&times;</button>
+            </div>
+
+            <!-- Modal Content Layout -->
+            <div class="student-profile-layout">
+                <!-- Left Pane: Info, Metrics & Actions -->
+                <div style="display:flex; flex-direction:column; gap:1.5rem;">
+                    <!-- Data Entry Alerts Container -->
+                    <div id="detail-alerts-container"></div>
+
+                    <!-- Statistics Summary Grid -->
+                    <div class="card-stats">
+                        <div class="stat-box">
+                            <div id="detail-stat-quiz" class="stat-val">-</div>
+                            <div class="stat-lbl">Quiz Score</div>
+                        </div>
+
+                        <div class="stat-box">
+                            <div id="detail-stat-practice" class="stat-val">-</div>
+                            <div class="stat-lbl">Daily Practice</div>
+                        </div>
+                    </div>
+
+                    <!-- Student Full Metadata Profile Card -->
+                    <div class="table-card"
+                        style="padding:1.5rem; background:#f8fafc; box-shadow:none; margin-bottom:1.5rem;">
+                        <h4 class="profile-section-title" style="margin-bottom:1rem;"><i
+                                class="fa-solid fa-address-card"></i> Student Full Profile Info</h4>
+                        <div
+                            style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem; line-height: 1.5;">
+                            <div>
+                                <strong style="color:var(--text-muted);">Student ID:</strong>
+                                <div id="detail-profile-id"
+                                    style="color:var(--text-title); font-weight:600; margin-bottom:0.5rem;">-</div>
+                            </div>
+                            <div>
+                                <strong style="color:var(--text-muted);">Facilitator Email:</strong>
+                                <div id="detail-profile-facilitator"
+                                    style="color:var(--text-title); font-weight:600; margin-bottom:0.5rem;">-</div>
+                            </div>
+                            <div>
+                                <strong style="color:var(--text-muted);">Priority Level:</strong>
+                                <div id="detail-profile-priority"
+                                    style="color:var(--text-title); font-weight:600; margin-bottom:0.5rem;">-</div>
+                            </div>
+                            <div>
+                                <strong style="color:var(--text-muted);">Queue Status:</strong>
+                                <div id="detail-profile-status"
+                                    style="color:var(--text-title); font-weight:600; margin-bottom:0.5rem;">-</div>
+                            </div>
+                            <div style="grid-column: span 2;">
+                                <strong style="color:var(--text-muted);">Suggested Action:</strong>
+                                <div id="detail-profile-suggested-action"
+                                    style="color:var(--text-title); font-weight:600; margin-bottom:0.5rem;">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Queue Action completion -->
+                    <div class="table-card" style="padding:1.5rem; background:#f8fafc; box-shadow:none;">
+                        <h4 class="profile-section-title" style="margin-bottom:1rem;"><i
+                                class="fa-solid fa-circle-check"></i> Complete Intervention Action</h4>
+                        <div class="form-group">
+                            <label for="select-intervention-type">Select Action Taken</label>
+                            <select id="select-intervention-type" class="select-input" style="width:100%;">
+                                <option value="call_parent">Call Parent Follow-up</option>
+                                <option value="one_on_one">One-on-One session completed</option>
+                                <option value="chat_student">WhatsApp text sent to student</option>
+                                <option value="ignored">Ignore for this quiz cycle</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="textarea-intervention-notes">Intervention Outcome Notes</label>
+                            <textarea id="textarea-intervention-notes" class="text-input"
+                                style="width:100%; height:75px; resize:none;"
+                                placeholder="Detail what was discussed, e.g., absence due to transportation, mobile game rules set, motivation..."></textarea>
+                        </div>
+                        <div class="flex-between">
+                            <button class="btn-secondary" onclick="markIntervention('ignored')">
+                                <i class="fa-solid fa-ban"></i> Skip / Ignore
+                            </button>
+                            <button class="btn-primary" onclick="markIntervention('completed')">
+                                <i class="fa-solid fa-check-double"></i> Complete Intervention
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Pane: AI Assistant & Notes History -->
+                <div style="display:flex; flex-direction:column; gap:1.5rem;">
+                    <!-- AI Analyst Why Summary -->
+                    <div class="ai-comm-box" style="margin-top:0;">
+                        <div class="ai-header">
+                            <i class="fa-solid fa-brain"></i> AI Priority Analyst
+                        </div>
+                        <p id="detail-ai-why" style="font-size:0.88rem; line-height:1.5; color:var(--text-title);"></p>
+                    </div>
+
+                    <!-- Historical Metrics -->
+                    <div class="table-card" style="padding:1.5rem; background:#f8fafc; box-shadow:none; margin-top:0;">
+                        <h4 class="profile-section-title" style="margin-bottom:1rem;"><i class="fa-solid fa-chart-line"></i> Historical Metrics</h4>
+                        <div class="custom-table-container" style="max-height: 250px; overflow-y: auto;">
+                            <table class="custom-table" style="font-size: 0.8rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th class="text-center">Session (min)</th>
+                                        <th class="text-center">Practice Qs</th>
+                                        <th class="text-center">Quiz Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detail-metrics-tbody">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Facilitator Notes Timeline -->
+                    <div>
+                        <h4 class="profile-section-title"><i class="fa-solid fa-pen-nib"></i> Facilitator Notes Log</h4>
+                        <!-- Add Note inline form -->
+                        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+                            <input type="text" id="input-new-note" class="text-input" style="flex:1;"
+                                placeholder="Add quick note for this student...">
+                            <button class="btn-primary" style="padding:0.65rem;" onclick="submitQuickNote()"><i
+                                    class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                        <div id="detail-notes-timeline" class="notes-timeline">
+                            <!-- Notes items loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Add Student Modal -->
+    <div id="modal-add-student" class="modal-overlay">
+        <div class="modal-box" style="max-width:540px;">
+            <div class="modal-header">
+                <h3>Add New Student Entry</h3>
+                <button class="modal-close-btn" onclick="closeAddStudentModal()">&times;</button>
+            </div>
+            <form id="form-add-student" onsubmit="submitNewStudent(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="add-student-id">Student ID *</label>
+                        <input type="text" id="add-student-id" class="text-input" style="width:100%;"
+                            placeholder="e.g. S201" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="add-student-facil">Facilitator Email *</label>
+                        <input type="email" id="add-student-facil" class="text-input" style="width:100%;"
+                            placeholder="facilitator1@noon.com" required>
+                    </div>
+                </div>
+
+                    <div id="add-student-error-box" class="alert-box" style="display:none; padding:0.5rem 1rem;">
+                        <!-- Error response -->
+                    </div>
+
+                    <div class="flex-between" style="margin-top:1.75rem;">
+                        <button type="button" class="btn-secondary" onclick="closeAddStudentModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Add student to Database</button>
+                    </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main JS Application Controller -->
+    <script src="/static/js/main.js"></script>
+</body>
+
+</html>
