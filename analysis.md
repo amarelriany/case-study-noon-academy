@@ -21,7 +21,8 @@ Facilitators spend too much time deciding which students to prioritize and what 
 
 # **What I cut and why**
 
-- Using any column in **student_metadata.csv** since their are no common identical columns between it and **facilitator_notes.csv** or **student_daily_metrics.csv** which means I avoided using target score, or messaging parents
+- **Metadata-dependent features (parent outreach, target-score personalization, campus reporting)** — I excluded `student_metadata.csv` from the MVP because its fields could not be reliably validated against the operational datasets, and I preferred a smaller system built on trusted signals over one that depended on potentially inconsistent data.
+- **Authentication and role-based access control** — I deferred authentication because it does not improve intervention coverage; given the two-day timeline, I prioritized risk identification and facilitator workflows over production infrastructure concerns.
 
 # **What I'd build next**
 
