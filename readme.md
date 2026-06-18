@@ -1,3 +1,4 @@
+[▶ Watch Demo](./screen-capture.mp4)
 ## Getting Started
 
 Follow these steps to set up and run the application locally:
