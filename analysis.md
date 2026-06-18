@@ -1,10 +1,6 @@
 # **Diagnosis**
 
-facilitators waste a lot of time in:
-
-- Thinking what students to prioritize & what actions to take
-- Facilitators don't have clear operational targets or workload management so they achieve the 80% intervention goal
-- Risk Signals Are Fragmented Across Multiple Sources
+Facilitators spend too much time deciding which students to prioritize and what intervention to take, causing high-risk students to be missed. Student risk signals are scattered across attendance data, practice activity, quiz performance, and facilitator notes, requiring manual synthesis before action can be taken. As student volume grows, the absence of clear prioritization and workload management makes intervention coverage impossible to scale.
 
 # **What’s found in the data**
 
